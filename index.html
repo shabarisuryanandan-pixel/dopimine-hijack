@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dopamine Hijack - Reclaim Your Mind</title>
+  
+  <!-- 1. Load Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            'neon-green': '#39ff14',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- 2. Load React & Babel -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- 3. Custom Styles -->
+  <style>
+    html { scroll-behavior: smooth; }
+    
+    /* Glitch Animation */
+    .hero-glitch {
+       font-size: 4rem; 
+       font-weight: 900;
+       line-height: 0.9;
+       position: relative;
+       z-index: 1;
+    }
+    @media (min-width: 768px) {
+       .hero-glitch { font-size: 7rem; }
+    }
+    .hero-glitch.layers { position: relative; }
+    .hero-glitch.layers::before, .hero-glitch.layers::after {
+        content: attr(data-text);
+        position: absolute;
+        width: 100%; height: 100%;
+        top: 0; left: 0;
+        opacity: 0.8;
+    }
+    .hero-glitch.layers::before {
+        color: #ff00de;
+        z-index: -1;
+        animation: glitch-anim-1 3s infinite linear alternate-reverse;
+    }
+    .hero-glitch.layers::after {
+        color: #39ff14;
+        z-index: -2;
+        animation: glitch-anim-2 3s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-anim-1 {
+        0% { clip-path: inset(20% 0 80% 0); transform: translate(-2px, 1px); }
+        20% { clip-path: inset(60% 0 10% 0); transform: translate(2px, -1px); }
+        40% { clip-path: inset(40% 0 50% 0); transform: translate(-2px, 2px); }
+        60% { clip-path: inset(80% 0 5% 0); transform: translate(2px, -2px); }
+        80% { clip-path: inset(10% 0 70% 0); transform: translate(-1px, 1px); }
+        100% { clip-path: inset(30% 0 50% 0); transform: translate(1px, -1px); }
+    }
+    @keyframes glitch-anim-2 {
+        0% { clip-path: inset(10% 0 60% 0); transform: translate(2px, -1px); }
+        20% { clip-path: inset(80% 0 5% 0); transform: translate(-2px, 2px); }
+        40% { clip-path: inset(30% 0 20% 0); transform: translate(2px, 1px); }
+        60% { clip-path: inset(10% 0 80% 0); transform: translate(-1px, -2px); }
+        80% { clip-path: inset(50% 0 30% 0); transform: translate(1px, 2px); }
+        100% { clip-path: inset(20% 0 70% 0); transform: translate(-2px, 1px); }
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #111; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #39ff14; }
+  </style>
+</head>
+<body class="bg-black text-white font-sans selection:bg-neon-green selection:text-black">
+  
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    // --- ICONS (SVG Replacements for Lucide) ---
+    const Brain = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z"/></svg>;
+    const AlertTriangle = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg>;
+    const Clock = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+    const Send = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>;
+    const CheckCircle = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>;
+    const Share2 = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>;
+    const Lock = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>;
+    const Activity = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>;
+    const Copy = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>;
+    const History = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/><path d="M12 7v5l4 2"/></svg>;
+    const Database = (props) => <svg {...props} xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><ellipse cx="12" cy="5" rx="9" ry="3"/><path d="M21 12c0 1.66-4 3-9 3s-9-1.34-9-3"/><path d="M3 5v14c0 1.66 4 3 9 3s 9-1.34 9-3V5"/></svg>;
+
+    // --- CONSTANTS ---
+    const SHEET_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQFCBcKoRZC9fA7nmstBVbTfPCjG_V5rAKswETOp-PimEc8slHe7okFqxeQgSmOmTwKzu7Qnho7i6hK/pub?output=csv"; 
+    const FORM_ACTION_URL = "https://docs.google.com/forms/d/e/1FAIpQLSc8hwlaChdBpxBpKoKg7jWHBNarGY0PCp9X0wFBZbEUqb0xFw/formResponse";
+
+    // --- COMPONENTS ---
+
+    const Navbar = () => (
+      <nav className="fixed top-0 w-full z-50 bg-black/80 backdrop-blur-md border-b border-neon-green/20">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center justify-between h-16">
+            <div className="flex items-center space-x-2">
+              <Brain className="h-8 w-8 text-neon-green animate-pulse" />
+              <span className="text-xl font-bold tracking-wider text-white">
+                DOPAMINE <span className="text-neon-green">HIJACK</span>
+              </span>
+            </div>
+            <div className="hidden md:block">
+              <div className="ml-10 flex items-baseline space-x-8">
+                <a href="#history" className="text-gray-300 hover:text-neon-green transition-colors px-3 py-2 rounded-md text-sm font-medium">History</a>
+                <a href="#mission" className="text-gray-300 hover:text-neon-green transition-colors px-3 py-2 rounded-md text-sm font-medium">Memorandum</a>
+                <a href="#stats" className="text-gray-300 hover:text-neon-green transition-colors px-3 py-2 rounded-md text-sm font-medium">The Data</a>
+                <a href="#petition" className="bg-neon-green/10 border border-neon-green text-neon-green hover:bg-neon-green hover:text-black transition-all px-4 py-2 rounded-md text-sm font-bold">Sign Now</a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </nav>
+    );
+
+    const Hero = () => (
+      <div className="relative h-screen flex items-center justify-center overflow-hidden bg-black">
+        {/* Grid Background */}
+        <div className="absolute inset-0 z-0 opacity-20" 
+            style={{ backgroundImage: 'linear-gradient(#39ff14 1px, transparent 1px), linear-gradient(90deg, #39ff14 1px, transparent 1px)', backgroundSize: '50px 50px' }}>
+        </div>
+        
+        <div className="relative z-10 text-center px-4">
+          <div className="inline-block mb-8 px-4 py-1 rounded-full border border-neon-green/50 bg-neon-green/10 text-neon-green text-sm font-mono animate-bounce">
+            ⚠ WARNING: YOUR ATTENTION IS BEING SOLD
+          </div>
+          
+          <h2 className="text-xl md:text-3xl font-bold text-gray-300 mb-2 tracking-[0.3em] uppercase">
+            DOPAMINE HIJACK
+          </h2>
+
+          {/* GLITCH TITLE */}
+          <div className="relative mb-6 select-none">
+            <h1 className="hero-glitch layers" data-text="RECLAIM">
+              <span>RECLAIM</span>
+            </h1>
+            <h1 className="hero-glitch layers text-neon-green" data-text="YOUR MIND">
+              <span>YOUR MIND</span>
+            </h1>
+          </div>
+
+          <p className="mt-8 max-w-2xl mx-auto text-xl text-gray-400">
+            The algorithms of TikTok, Reels, and Shorts are designed to addict you. 
+            Join the movement to demand ethical algorithms.
+          </p>
+          <div className="mt-10 flex flex-wrap justify-center gap-4">
+            <a href="#petition" className="group relative px-8 py-4 bg-neon-green text-black font-bold text-lg rounded overflow-hidden transition-all hover:scale-105">
+              <div className="absolute inset-0 w-full h-full bg-white/20 group-hover:translate-x-full transition-transform duration-500 skew-x-12 -translate-x-full"></div>
+              SIGN THE MEMORANDUM
+            </a>
+            <a href="#calculator" className="px-8 py-4 border border-gray-700 text-white font-bold text-lg rounded hover:border-red-500 hover:text-red-500 transition-all">
+              DOOM SCROLL TEST
+            </a>
+            <a href="#history" className="px-8 py-4 border border-gray-700 text-white font-bold text-lg rounded hover:border-neon-green hover:text-neon-green transition-all">
+              THE HISTORY
+            </a>
+          </div>
+        </div>
+      </div>
+    );
+
+    const HistorySection = () => {
+      const timeline = [
+        { year: "2013", title: "The Vine Era", desc: "Vine launches with 6-second looping videos. It trained humanity to crave instant gratification, but failed due to monetization issues.", icon: History },
+        { year: "2017-18", title: "The Merger", desc: "ByteDance acquires Musical.ly and merges it into TikTok. The 'For You' algorithm is perfected, analyzing sub-conscious preferences.", icon: Database },
+        { year: "2020", title: "The Lockdown Catalyst", desc: "COVID-19 forces the world inside. Screen time explodes. TikTok becomes the most downloaded app globally as boredom peaks.", icon: AlertTriangle },
+        { year: "2021", title: "The Clone Wars", desc: "Seeing the threat, Instagram launches Reels and YouTube launches Shorts. Now, there is no escape from the format anywhere.", icon: Copy },
+      ];
+
+      return (
+        <section id="history" className="py-20 bg-black relative border-t border-gray-800">
+          <div className="max-w-5xl mx-auto px-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-12 text-center">
+              THE RISE OF <span className="text-neon-green">SHORT FORM</span>
+            </h2>
+            <div className="relative">
+              <div className="absolute left-4 md:left-1/2 top-0 bottom-0 w-1 bg-gray-800 md:-ml-0.5"></div>
+              <div className="space-y-12">
+                {timeline.map((item, index) => (
+                  <div key={index} className={`relative flex items-center justify-between md:justify-normal ${index % 2 === 0 ? 'md:flex-row-reverse' : ''}`}>
+                    <div className="absolute left-4 md:left-1/2 w-4 h-4 rounded-full bg-neon-green border-4 border-black md:-ml-2 z-10"></div>
+                    <div className="ml-12 md:ml-0 md:w-5/12 bg-gray-900 p-6 rounded-xl border border-gray-800 hover:border-neon-green transition-all group">
+                      <div className="flex items-center gap-3 mb-2">
+                        <item.icon className="w-5 h-5 text-neon-green" />
+                        <span className="text-2xl font-bold text-white font-mono">{item.year}</span>
+                      </div>
+                      <h3 className="text-xl font-bold text-gray-200 mb-2">{item.title}</h3>
+                      <p className="text-gray-400 text-sm leading-relaxed">
+                        {item.desc}
+                      </p>
+                    </div>
+                    <div className="hidden md:block md:w-5/12"></div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const QuoteSection = () => (
+      <section className="py-10 bg-black flex items-center justify-center border-y border-neon-green/20">
+        <div className="max-w-4xl px-4 text-center">
+          <h2 className="text-xl md:text-2xl font-bold text-white tracking-wider">
+            "WHY <span className="text-neon-green italic">WILLPOWER</span> ISN'T ENOUGH AGAINST A <span className="text-neon-green italic">SUPERCOMPUTER</span>."
+          </h2>
+        </div>
+      </section>
+    );
+
+    const StatsSection = () => {
+      const stats = [
+        { icon: Clock, value: "2.5 Hrs", label: "Average time spent on social media daily per person." },
+        { icon: Brain, value: "8 Secs", label: "Average human attention span in 2024 (Less than a goldfish)." },
+        { icon: AlertTriangle, value: "300%", label: "Increase in depression rates among teens since 2010." },
+        { icon: Lock, value: "Infinite", label: "The scroll depth designed to keep you hooked forever." },
+      ];
+
+      return (
+        <section id="stats" className="py-20 bg-gray-900 relative">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-8 text-center">
+              THE <span className="text-neon-green">DATA</span>
+            </h2>
+            <div className="max-w-3xl mx-auto mb-16 p-6 bg-black border border-neon-green/30 rounded-lg shadow-[0_0_20px_rgba(57,255,20,0.1)]">
+              <h3 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                <Database className="text-neon-green w-5 h-5"/> How They Know You Better Than You Know Yourself
+              </h3>
+              <p className="text-gray-300 leading-relaxed">
+                It isn't just about what you "like". The algorithm tracks <strong>thousands of hidden parameters</strong> to keep you hooked. It measures the <em>milliseconds</em> you pause on a video, your scroll velocity, the pressure of your touch, your battery percentage, the volume level, your GPS location, and even how often you re-watch specific 3-second clips. It feeds this into a neural network designed with one goal: <strong>Retention at the cost of Mental Health.</strong>
+              </p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+              {stats.map((stat, index) => (
+                <div key={index} className="p-6 bg-black border border-gray-800 hover:border-neon-green transition-colors duration-300 rounded-lg group">
+                  <stat.icon className="w-10 h-10 text-gray-500 group-hover:text-neon-green mb-4 transition-colors" />
+                  <h3 className="text-4xl font-mono font-bold text-white mb-2">{stat.value}</h3>
+                  <p className="text-gray-400 text-sm leading-relaxed">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const RewardComparison = () => {
+      return (
+        <section className="py-20 bg-black border-t border-gray-800">
+          <div className="max-w-5xl mx-auto px-4">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-16 text-center">
+              NATURAL VS <span className="text-neon-green">ARTIFICIAL</span> REWARDS
+            </h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+              <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+                <h3 className="text-4xl font-black text-white mb-2">97%</h3>
+                <p className="text-xs font-bold text-gray-500 tracking-widest uppercase mb-3">OF TEENAGERS</p>
+                <p className="text-sm text-gray-400">Use at least one major social media platform daily, exposing developing brains to algorithmic manipulation.</p>
+              </div>
+              <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+                <h3 className="text-4xl font-black text-red-500 mb-2">+13%</h3>
+                <p className="text-xs font-bold text-gray-500 tracking-widest uppercase mb-3">DEPRESSION RISK</p>
+                <p className="text-sm text-gray-400">Increase in depressive symptoms for every additional hour spent on social media per day.</p>
+              </div>
+              <div className="bg-gray-900/50 p-6 rounded-xl border border-gray-800">
+                <h3 className="text-4xl font-black text-neon-green mb-2">1/3</h3>
+                <p className="text-xs font-bold text-gray-500 tracking-widest uppercase mb-3">USERS ARE YOUTH</p>
+                <p className="text-sm text-gray-400">Adolescents make up a massive portion of the user base, often targeted by "growth" metrics.</p>
+              </div>
+            </div>
+
+            <div className="bg-gray-900 p-8 rounded-2xl border border-gray-800">
+              <h3 className="text-xl font-bold text-white mb-8 flex items-center gap-2">
+                <Activity className="text-neon-green w-6 h-6" /> DOPAMINE RELEASE LEVELS
+              </h3>
+
+              <div className="space-y-8">
+                <div>
+                  <div className="flex justify-between text-sm text-gray-300 mb-2">
+                    <span>Eating a good meal</span>
+                    <span className="text-gray-500">~50% Increase</span>
+                  </div>
+                  <div className="h-4 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-blue-500 w-[33%]"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-sm text-white font-bold mb-2">
+                    <span className="text-neon-green">Social Media / Viral Content</span>
+                    <span className="text-neon-green">~100% Increase</span>
+                  </div>
+                  <div className="h-4 bg-gray-800 rounded-full overflow-hidden relative">
+                      <div className="absolute inset-0 bg-neon-green/20 animate-pulse"></div>
+                      <div className="h-full bg-neon-green w-[66%] shadow-[0_0_15px_#39ff14]"></div>
+                  </div>
+                </div>
+
+                <div>
+                  <div className="flex justify-between text-sm text-gray-300 mb-2">
+                    <span>Substance Abuse (Cocaine/Meth)</span>
+                    <span className="text-red-500">~150%+ Increase</span>
+                  </div>
+                  <div className="h-4 bg-gray-800 rounded-full overflow-hidden">
+                    <div className="h-full bg-red-600 w-[100%]"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <p className="mt-6 text-xs text-center text-gray-600 italic">
+                Source: Meta-analysis on neurophysiological impact of digital media (PMC 2025).
+              </p>
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const InteractiveCalculator = () => {
+      const [hours, setHours] = useState(2);
+      const [yearsLost, setYearsLost] = useState(0);
+
+      useEffect(() => {
+        const lost = (hours * 365 * 60) / 24 / 365;
+        setYearsLost(lost.toFixed(1));
+      }, [hours]);
+
+      return (
+        <section id="calculator" className="py-20 bg-black border-b border-gray-800">
+          <div className="max-w-4xl mx-auto px-4 text-center">
+            <h2 className="text-3xl md:text-5xl font-bold text-white mb-8">
+              THE <span className="text-neon-green">DOOM SCROLL</span> CALCULATOR
+            </h2>
+            <div className="bg-gray-900 p-8 rounded-2xl border border-gray-700 shadow-[0_0_30px_rgba(57,255,20,0.1)]">
+              <div className="mb-8">
+                <label className="block text-neon-green font-mono mb-4 text-xl">
+                  I scroll {hours} hours per day
+                </label>
+                <input 
+                  type="range" 
+                  min="0" 
+                  max="12" 
+                  step="0.5"
+                  value={hours} 
+                  onChange={(e) => setHours(parseFloat(e.target.value))}
+                  className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-neon-green"
+                />
+                <div className="flex justify-between text-xs text-gray-500 mt-2">
+                  <span>0 hrs</span>
+                  <span>6 hrs</span>
+                  <span>12+ hrs</span>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-10">
+                <div className="bg-black p-4 rounded-lg border border-gray-800">
+                  <p className="text-gray-500 text-xs uppercase">Hours per Year</p>
+                  <p className="text-2xl font-bold text-white">{Math.floor(hours * 365)} hrs</p>
+                </div>
+                <div className="bg-black p-4 rounded-lg border border-gray-800">
+                  <p className="text-gray-500 text-xs uppercase">Days per Year</p>
+                  <p className="text-2xl font-bold text-white">{Math.floor((hours * 365)/24)} days</p>
+                </div>
+                <div className="bg-neon-green p-4 rounded-lg transform md:scale-110 shadow-lg shadow-neon-green/20">
+                  <p className="text-black font-bold text-xs uppercase">Life Lost (over 60 yrs)</p>
+                  <p className="text-3xl font-extrabold text-black">{yearsLost} Years</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const MemorandumText = () => (
+      <div className="bg-gray-100 text-black p-8 rounded-sm shadow-xl mb-8 h-96 overflow-y-scroll font-serif border-4 border-gray-300 relative">
+        <div className="absolute top-4 right-4 opacity-20 pointer-events-none">
+          <Brain className="w-24 h-24 text-black" />
+        </div>
+        <h3 className="text-2xl font-bold uppercase text-center underline mb-6">Memorandum of Understanding</h3>
+        <p className="mb-4"><strong>TO:</strong> The Executives and Board of Directors of Meta Platforms Inc., Alphabet Inc. (Google/YouTube), and ByteDance Ltd. (TikTok).</p>
+        <p className="mb-4"><strong>FROM:</strong> The Undersigned Users, Citizens, and Advocates for Digital Wellbeing.</p>
+        <p className="mb-4"><strong>SUBJECT:</strong> Demand for Ethical Algorithm Design.</p>
+        <p className="mb-4"><strong>WHEREAS,</strong> the aforementioned platforms utilize proprietary algorithms specifically engineered to exploit human psychological vulnerabilities (dopamine feedback loops) to maximize time-on-site;</p>
+        <p className="mb-4"><strong>WE HEREBY DEMAND THE FOLLOWING:</strong></p>
+        <ol className="list-decimal pl-6 space-y-2 mb-6 font-bold">
+          <li>Transparency in ranking algorithms.</li>
+          <li>Opt-Out for "Infinite Scroll".</li>
+          <li>Default usage limits for minors.</li>
+        </ol>
+        <p className="mb-4">By signing this memorandum, we pledge to reclaim our digital autonomy.</p>
+        <p className="mt-8 text-center font-bold italic">-- END OF DOCUMENT --</p>
+      </div>
+    );
+
+    const PetitionForm = () => {
+      const [formData, setFormData] = useState({
+        name: '',
+        email: '',
+        suggestion: ''
+      });
+      const [signed, setSigned] = useState(false);
+      const [submitting, setSubmitting] = useState(false);
+      const [count, setCount] = useState(0); 
+      const [loadingData, setLoadingData] = useState(true);
+      const [recentSignatures, setRecentSignatures] = useState([]);
+
+      useEffect(() => {
+        const fetchSheetData = async () => {
+          try {
+            if (!SHEET_URL || SHEET_URL.includes("PASTE_YOUR_CSV_LINK_HERE")) {
+                setLoadingData(false);
+                return;
+            }
+            const response = await fetch(SHEET_URL);
+            const text = await response.text();
+            
+            const rows = [];
+            const lines = text.split('\n').slice(1);
+            
+            lines.forEach(line => {
+              const cols = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+              if (cols.length >= 4) {
+                  const cleanName = cols[1] ? cols[1].replace(/^"|"$/g, '').trim() : "Anonymous";
+                  const cleanMsg = cols[3] ? cols[3].replace(/^"|"$/g, '').trim() : "";
+                  if (cleanName) {
+                    rows.push({ name: cleanName, msg: cleanMsg });
+                  }
+              }
+            });
+            
+            setCount(rows.length); 
+            setRecentSignatures(rows.slice(-5).reverse()); 
+            setLoadingData(false);
+          } catch (error) {
+            console.error("Data fetch error:", error);
+            setLoadingData(false);
+          }
+        };
+        fetchSheetData();
+      }, []);
+
+      const handleSubmit = (e) => {
+        setSubmitting(true);
+        setTimeout(() => {
+          setSigned(true);
+          setCount(prev => prev + 1);
+          setSubmitting(false);
+        }, 1500); 
+      };
+      
+      const copyLink = () => {
+        const url = window.location.href;
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url)
+              .then(() => alert("Link copied to clipboard!"))
+              .catch(() => prompt("Copy link below:", url));
+        } else {
+            prompt("Copy link below:", url);
+        }
+      };
+
+      if (signed) {
+        return (
+          <section id="petition" className="py-20 bg-gray-900 flex items-center justify-center">
+            <div className="max-w-md w-full bg-black border border-neon-green p-8 rounded-xl text-center shadow-[0_0_50px_rgba(57,255,20,0.2)]">
+              <CheckCircle className="w-20 h-20 text-neon-green mx-auto mb-6" />
+              <h3 className="text-3xl font-bold text-white mb-4">THANK YOU!</h3>
+              <p className="text-gray-300 mb-6">
+                Your support has been recorded.
+              </p>
+              <button onClick={copyLink} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 px-4 rounded flex items-center justify-center gap-2 transition-all mb-3">
+                <Copy className="w-5 h-5" />
+                Copy Link to Share
+              </button>
+            </div>
+          </section>
+        );
+      }
+
+      return (
+        <section id="petition" className="py-20 bg-gray-900">
+          <div className="max-w-7xl mx-auto px-4">
+            <h2 className="text-4xl font-bold text-white mb-12 text-center">
+                SIGN THE <span className="text-neon-green">MEMORANDUM</span>
+            </h2>
+            <MemorandumText />
+            <div className="flex flex-col md:flex-row gap-12 mt-12">
+                <div className="md:w-1/2">
+                <div className="bg-black/50 p-6 rounded-lg border-l-4 border-neon-green h-full">
+                    <div className="flex items-center justify-between mb-6">
+                    <h4 className="text-white font-bold flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-neon-green" /> LIVE SIGNATURES
+                    </h4>
+                    <span className="text-neon-green font-mono font-bold text-xl">
+                        {loadingData ? "..." : count.toLocaleString()}
+                    </span>
+                    </div>
+                    <div className="space-y-4 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
+                    <h5 className="text-gray-500 text-sm uppercase tracking-widest mb-2">Recent Supporters</h5>
+                    {recentSignatures.length > 0 ? (
+                        recentSignatures.map((sig, idx) => (
+                        <div key={idx} className="bg-gray-900/50 p-3 rounded border border-gray-800">
+                            <div className="text-neon-green font-bold text-sm">{sig.name || "Supporter"}</div>
+                            <div className="text-gray-400 text-sm italic">"{sig.msg || "Signed."}"</div>
+                        </div>
+                        ))
+                    ) : (
+                      !loadingData && <div className="text-gray-500 italic text-sm">No signatures yet. Be the first!</div>
+                    )}
+                    </div>
+                </div>
+                </div>
+
+                <div className="md:w-1/2 bg-black p-8 rounded-2xl border border-gray-800 shadow-2xl relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-20 h-20 bg-neon-green blur-[80px] opacity-20"></div>
+                
+                <iframe name="hidden_iframe" id="hidden_iframe" style={{display:'none'}}></iframe>
+
+                <form 
+                    action={FORM_ACTION_URL} 
+                    method="POST" 
+                    target="hidden_iframe"
+                    onSubmit={handleSubmit} 
+                    className="space-y-6 relative z-10"
+                >
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Full Name</label>
+                      <input 
+                          required
+                          name="entry.1910974427"
+                          type="text" 
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-neon-green focus:ring-1 focus:ring-neon-green outline-none transition-all"
+                          placeholder="John Doe"
+                          value={formData.name}
+                          onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Email Address</label>
+                      <input 
+                          required
+                          name="entry.1665771727"
+                          type="email" 
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-neon-green focus:ring-1 focus:ring-neon-green outline-none transition-all"
+                          placeholder="you@example.com"
+                          value={formData.email}
+                          onChange={(e) => setFormData({...formData, email: e.target.value})}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium text-gray-400 mb-2">Your Suggestion / Message</label>
+                      <textarea 
+                          required
+                          name="entry.2124525476"
+                          rows="4"
+                          className="w-full bg-gray-900 border border-gray-700 rounded-lg p-3 text-white focus:border-neon-green focus:ring-1 focus:ring-neon-green outline-none transition-all"
+                          placeholder="I support this because..."
+                          value={formData.suggestion}
+                          onChange={(e) => setFormData({...formData, suggestion: e.target.value})}
+                      />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      disabled={submitting}
+                      className={`w-full bg-neon-green hover:bg-[#2ed510] text-black font-bold py-4 rounded-lg transition-all transform hover:-translate-y-1 shadow-[0_4px_14px_0_rgba(57,255,20,0.39)] flex items-center justify-center gap-2 ${submitting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                      {submitting ? (
+                        <span>SENDING...</span>
+                      ) : (
+                        <>
+                          <Send className="w-5 h-5" />
+                          SIGN OFFICIALLY
+                        </>
+                      )}
+                    </button>
+                    <p className="text-xs text-center text-gray-600 mt-4">
+                    By clicking sign, you agree to have your support added to the public memorandum.
+                    </p>
+                </form>
+                </div>
+            </div>
+          </div>
+        </section>
+      );
+    };
+
+    const Footer = () => (
+      <footer className="bg-black py-12 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 text-center">
+          <div className="flex justify-center items-center gap-2 mb-4">
+            <Brain className="w-6 h-6 text-neon-green" />
+            <h3 className="text-2xl font-bold text-white">DOPAMINE <span className="text-neon-green">HIJACK</span></h3>
+          </div>
+          <p className="text-gray-500 mb-8 max-w-lg mx-auto">
+            "The only way to deal with an unfree world is to become so absolutely free that your very existence is an act of rebellion."
+          </p>
+          <div className="text-gray-600 text-sm mt-8">
+            © 2024 Dopamine Hijack Project. Built for the future.
+            <br />
+            <span className="text-neon-green text-base font-bold mt-4 block tracking-wider">work by nandan</span>
+          </div>
+        </div>
+      </footer>
+    );
+
+    const App = () => {
+      return (
+        <div>
+          <Navbar />
+          <Hero />
+          <HistorySection />
+          <QuoteSection />
+          <StatsSection />
+          <RewardComparison />
+          <InteractiveCalculator />
+          <PetitionForm />
+          <Footer />
+        </div>
+      );
+    };
+
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
