@@ -216,7 +216,8 @@
       );
     };
 
-    const QuoteSection = () => (
+    const QuoteSection = () => {
+      return (
       <section className="py-10 bg-black flex items-center justify-center border-y border-neon-green/20">
         <div className="max-w-4xl px-4 text-center">
           <h2 className="text-xl md:text-2xl font-bold text-white tracking-wider">
@@ -224,7 +225,7 @@
           </h2>
         </div>
       </section>
-    );
+    )};
 
     const StatsSection = () => {
       const stats = [
@@ -459,12 +460,14 @@
       }, []);
 
       const handleSubmit = (e) => {
+        console.log("Form submitting via hidden iframe...");
         setSubmitting(true);
+        // Increased timeout to 2.5s to ensure robust submission on slow connections
         setTimeout(() => {
           setSigned(true);
           setCount(prev => prev + 1);
           setSubmitting(false);
-        }, 1500); 
+        }, 2500); 
       };
       
       const copyLink = () => {
@@ -545,6 +548,7 @@
                     <div>
                       <label className="block text-sm font-medium text-gray-400 mb-2">Full Name</label>
                       <input 
+                          id="entry.1910974427"
                           required
                           name="entry.1910974427"
                           type="text" 
@@ -558,6 +562,7 @@
                     <div>
                       <label className="block text-sm font-medium text-gray-400 mb-2">Email Address</label>
                       <input 
+                          id="entry.1665771727"
                           required
                           name="entry.1665771727"
                           type="email" 
@@ -571,6 +576,7 @@
                     <div>
                       <label className="block text-sm font-medium text-gray-400 mb-2">Your Suggestion / Message</label>
                       <textarea 
+                          id="entry.2124525476"
                           required
                           name="entry.2124525476"
                           rows="4"
