@@ -28,7 +28,7 @@
   <style>
     html { scroll-behavior: smooth; }
     
-    /* Glitch Animation */
+    /* HERO GLITCH (Big) */
     .hero-glitch {
        font-size: 4rem; 
        font-weight: 900;
@@ -39,20 +39,39 @@
     @media (min-width: 768px) {
        .hero-glitch { font-size: 7rem; }
     }
-    .hero-glitch.layers { position: relative; }
-    .hero-glitch.layers::before, .hero-glitch.layers::after {
+    
+    /* FOOTER GLITCH (Small but same effect) */
+    .footer-glitch {
+       font-size: 1rem; 
+       font-weight: 700;
+       line-height: 1.2;
+       position: relative;
+       z-index: 1;
+       display: inline-block;
+    }
+    @media (min-width: 768px) {
+       .footer-glitch { font-size: 1.25rem; }
+    }
+
+    /* Shared Animation Logic */
+    .hero-glitch.layers, .footer-glitch.layers { position: relative; }
+    
+    .hero-glitch.layers::before, .hero-glitch.layers::after,
+    .footer-glitch.layers::before, .footer-glitch.layers::after {
         content: attr(data-text);
         position: absolute;
         width: 100%; height: 100%;
         top: 0; left: 0;
         opacity: 0.8;
     }
-    .hero-glitch.layers::before {
+    
+    /* Animation Colors & Keyframes */
+    .hero-glitch.layers::before, .footer-glitch.layers::before {
         color: #ff00de;
         z-index: -1;
         animation: glitch-anim-1 3s infinite linear alternate-reverse;
     }
-    .hero-glitch.layers::after {
+    .hero-glitch.layers::after, .footer-glitch.layers::after {
         color: #39ff14;
         z-index: -2;
         animation: glitch-anim-2 3s infinite linear alternate-reverse;
@@ -625,7 +644,14 @@
           <div className="text-gray-600 text-sm mt-8">
             © 2024 Dopamine Hijack Project. Built for the future.
             <br />
-            <span className="text-neon-green text-base font-bold mt-4 block tracking-wider">work by nandan</span>
+            <div className="mt-6">
+              <span 
+                className="footer-glitch layers text-neon-green text-base md:text-lg font-bold tracking-wider" 
+                data-text="Dopamine Hijack — Educational project, improved build by Nandan"
+              >
+                Dopamine Hijack — Educational project, improved build by Nandan
+              </span>
+            </div>
           </div>
         </div>
       </footer>
